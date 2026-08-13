@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <title>Quantum Media Lab | Visuales Cinematográficos & CGI</title>
+
+    <!-- Meta tags SEO y OpenGraph -->
+    <meta name="description" content="Estudio de producción audiovisual cinematográfica, CGI e IA para arquitectura, productos y espacios de lujo.">
+    <meta property="og:title" content="Quantum Media Lab | Visuales Cinematográficos">
+    <meta property="og:description" content="Transformamos arquitectura, productos y espacios en activos visuales de alto valor.">
+    <meta property="og:type" content="website">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        obsidian: '#050505',
+                        titanium: '#121212',
+                        accent: '#ffffff',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Cinzel', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Three.js CDN para Fondo de Partículas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        body {
+            background-color: #050505;
+            color: #f3f4f6;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .font-display {
+            font-family: 'Cinzel', serif;
+        }
+
+        /* Glassmorphism Panel */
+        .glass-panel {
+            background: rgba(18, 18, 18, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .glass-panel-hover:hover {
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.05);
+        }
+
+        /* Scrollbar Personalizada */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #050505;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #262626;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #525252;
+        }
+
+        /* Before / After Slider Styling */
+        .ba-container {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            user-select: none;
+            touch-action: pan-y;
+        }
+        .ba-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 50%;
+            overflow: hidden;
+            border-right: 2px solid #ffffff;
+            z-index: 10;
+        }
+        .ba-handle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 36px;
+            height: 36px;
+            background-color: #ffffff;
+            color: #000000;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: ew-resize;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+            z-index: 20;
+        }
+
+        /* Nav active link styling */
+        .nav-link.active {
+            color: #ffffff;
+            border-bottom: 2px solid #ffffff;
+        }
+
+        /* Page transition animation */
+        .page-view {
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="relative min-h-screen antialiased selection:bg-white selection:text-black">
+
+    <!-- Canvas de Partículas Monocromáticas (Three.js) -->
+    <canvas id="bgCanvas" class="fixed top-0 left-0 w-full h-full pointer-events-none z-0 opacity-40"></canvas>
+
+    <!-- Navigation Bar con Menú de Páginas -->
+    <header class="fixed top-0 left-0 w-full z-50 glass-panel border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <a href="#inicio" onclick="navigateTo('inicio')" class="text-lg md:text-xl font-display font-bold tracking-widest text-white uppercase hover:opacity-80 transition-opacity">
+                QUANTUM<span class="text-neutral-500 font-light ml-1">MEDIA LAB</span>
+            </a>
+
+            <!-- NAVEGACIÓN PRINCIPAL ENTRE PÁGINAS -->
+            <nav class="hidden md:flex items-center space-x-8 text-xs font-mono tracking-widest uppercase">
+                <a href="#inicio" id="nav-inicio" onclick="navigateTo('inicio')" class="nav-link py-1 text-neutral-400 hover:text-white transition-colors">01. Inicio</a>
+                <a href="#realestate" id="nav-realestate" onclick="navigateTo('realestate')" class="nav-link py-1 text-neutral-400 hover:text-white transition-colors">02. Real Estate</a>
+                <a href="#producto" id="nav-producto" onclick="navigateTo('producto')" class="nav-link py-1 text-neutral-400 hover:text-white transition-colors">03. E-Commerce</a>
+                <a href="#contacto" id="nav-contacto" onclick="navigateTo('contacto')" class="nav-link py-1 text-neutral-400 hover:text-white transition-colors">04. Contacto & Cotizar</a>
+            </nav>
+
+            <a href="#contacto" onclick="navigateTo('contacto')" class="px-5 py-2.5 bg-white text-black text-xs font-mono uppercase tracking-wider font-semibold rounded hover:bg-neutral-200 transition-all">
+                Iniciar Proyecto
+            </a>
+        </div>
+
+        <!-- Submenú móvil -->
+        <div class="flex md:hidden justify-around py-3 border-t border-white/10 text-[10px] font-mono tracking-wider uppercase bg-black/80">
+            <a href="#inicio" id="mnav-inicio" onclick="navigateTo('inicio')" class="text-neutral-400">Inicio</a>
+            <a href="#realestate" id="mnav-realestate" onclick="navigateTo('realestate')" class="text-neutral-400">Real Estate</a>
+            <a href="#producto" id="mnav-producto" onclick="navigateTo('producto')" class="text-neutral-400">E-Commerce</a>
+            <a href="#contacto" id="mnav-contacto" onclick="navigateTo('contacto')" class="text-neutral-400">Cotizar</a>
+        </div>
+    </header>
+
+    <main class="relative z-10 pt-24 min-h-[85vh]">
+
+        <!-- ========================================== -->
+        <!-- PÁGINA 1: INICIO (#inicio) -->
+        <!-- ========================================== -->
+        <div id="page-inicio" class="page-view space-y-20">
+            
+            <!-- Hero Section -->
+            <section class="flex flex-col justify-center items-center px-6 py-12 text-center max-w-6xl mx-auto">
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/20 bg-white/5 backdrop-blur text-[10px] font-mono tracking-widest text-neutral-300 uppercase mb-8">
+                    <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                    Producción Audiovisual Cinematográfica, IA & CGI
+                </div>
+
+                <h1 class="font-display text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white uppercase leading-tight mb-6">
+                    Transformamos arquitectura, productos y espacios en <span class="underline decoration-white/30 decoration-1 underline-offset-8">activos de alto valor</span>.
+                </h1>
+
+                <p class="max-w-2xl text-neutral-400 text-sm md:text-base font-light mb-10 leading-relaxed">
+                    Combinamos estética de grado de cine, CGI y tecnología generativa para marcas, desarrollos inmobiliarios y proyectos comerciales que buscan dominar su mercado.
+                </p>
+
+                <!-- Showreel Principal -->
+                <div class="w-full aspect-video max-w-4xl mx-auto rounded border border-white/20 overflow-hidden glass-panel mb-10 relative">
+                    <video controls autoplay muted loop playsinline webkit-playsinline preload="auto" class="w-full h-full object-cover rounded shadow-lg">
+                        <source src="https://github.com/davidrafael777/portafolio-web/releases/download/v1.0/horizontal.principal.mp4" type="video/mp4">
+                        Tu navegador no soporta la reproducción de este video.
+                    </video>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                    <a href="#realestate" onclick="navigateTo('realestate')" class="w-full sm:w-auto px-8 py-4 bg-white text-black font-mono text-xs uppercase tracking-widest font-bold rounded hover:bg-neutral-200 transition-all">
+                        Explorar Real Estate ↗
+                    </a>
+                    <a href="#contacto" onclick="navigateTo('contacto')" class="w-full sm:w-auto px-8 py-4 border border-white/30 text-white font-mono text-xs uppercase tracking-widest rounded hover:bg-white/10 transition-all">
+                        Configurar Propuesta
+                    </a>
+                </div>
+            </section>
+
+            <!-- Sección Antes / Después -->
+            <section class="py-16 px-6 border-t border-white/10 max-w-7xl mx-auto">
+                <div class="mb-12 text-center max-w-2xl mx-auto">
+                    <span class="text-xs font-mono text-neutral-500 uppercase tracking-widest block mb-2">Demostración Técnica</span>
+                    <h2 class="font-display text-2xl sm:text-4xl font-bold uppercase text-white mb-4">El Salto de Calidad Quantum</h2>
+                    <p class="text-xs font-mono text-neutral-400 leading-relaxed">
+                        Compara la toma base del cliente contra la iluminación, dinamismo y corrección cinematográfica CGI ejecutada por nuestro laboratorio.
+                    </p>
+                </div>
+
+                <!-- Selector de Muestras -->
+                <div class="flex justify-center gap-4 mb-8">
+                    <button onclick="setBASample(1)" id="baBtn1" class="px-4 py-2 border border-white text-xs font-mono uppercase bg-white text-black transition-all">
+                        Muestra 01: Toma Flash vs Motion CGI
+                    </button>
+                    <button onclick="setBASample(2)" id="baBtn2" class="px-4 py-2 border border-white/30 text-xs font-mono uppercase text-neutral-400 hover:text-white transition-all">
+                        Muestra 02: Render Cliente vs Motion CGI
+                    </button>
+                </div>
+
+                <!-- Slider Interactivo -->
+                <div class="max-w-4xl mx-auto glass-panel p-2 rounded border border-white/20">
+                    <div class="ba-container aspect-video rounded overflow-hidden" id="baContainer">
+                        <!-- Video Resultado (Después) -->
+                        <div class="absolute inset-0 w-full h-full bg-black">
+                            <iframe id="afterVideo" src="https://drive.google.com/file/d/10i1UkZMrhuW_Tdl9le_CNGpae5LsLYp4/preview" class="w-full h-full border-0 pointer-events-none" allow="autoplay"></iframe>
+                        </div>
+
+                        <!-- Imagen Base (Antes) -->
+                        <div class="ba-overlay" id="baOverlay">
+                            <img id="beforeImg" src="https://lh3.googleusercontent.com/sitesv/AG8ngQW1LkHTu_43_zZTtweXm70mz23R0hYrQ5Z5vHoldU42mwHB4uuFJLUUjpbqrsPbdRrfC3H0yEBd3_Cv04hyMxXzJIq9AMQcMq6Xd3CTVNzj2Ylhp-T4lDjIl6RpafV9-vaPhaNgODHm_UOyr_AN_dSswtMCDl-dfzzl03UZT_G3hhnhlbwqdcKPVLJAVHd1IPUvZMcq-qSeKi3Wet1M8CZxytIVbJAr_yV9qsK6tJs=w1280" class="absolute top-0 left-0 max-w-none h-full object-cover" alt="Antes">
+                        </div>
+
+                        <!-- Handle Drag -->
+                        <div class="ba-handle" id="baHandle">
+                            <span class="text-[10px] font-bold font-mono">↔</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-between max-w-4xl mx-auto mt-3 text-[10px] font-mono text-neutral-400 uppercase tracking-widest px-2">
+                    <span>← Render / Toma Base</span>
+                    <span>Resultado Quantum CGI →</span>
+                </div>
+            </section>
+
+            <!-- Acceso Rápido a Secciones -->
+            <section class="py-16 px-6 border-t border-white/10 max-w-7xl mx-auto">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div onclick="navigateTo('realestate')" class="glass-panel p-8 rounded cursor-pointer glass-panel-hover transition-all">
+                        <span class="text-xs font-mono text-neutral-500 uppercase tracking-widest block mb-2">01 / Portafolio & Tarifas</span>
+                        <h3 class="font-display text-2xl font-bold uppercase text-white mb-4">Real Estate & Arquitectura</h3>
+                        <p class="text-xs text-neutral-400 font-mono leading-relaxed mb-6">Proyectos ejecutados para residencias de lujo, departamentos y renders de proyección.</p>
+                        <span class="text-xs font-mono text-white underline tracking-widest uppercase">Entrar a Real Estate ↗</span>
+                    </div>
+
+                    <div onclick="navigateTo('producto')" class="glass-panel p-8 rounded cursor-pointer glass-panel-hover transition-all">
+                        <span class="text-xs font-mono text-neutral-500 uppercase tracking-widest block mb-2">02 / E-Commerce & CGI</span>
+                        <h3 class="font-display text-2xl font-bold uppercase text-white mb-4">E-Commerce & Venues</h3>
+                        <p class="text-xs text-neutral-400 font-mono leading-relaxed mb-6">Comerciales CGI 3D, empaques hiperrealistas y diseño de atmósfera para locales.</p>
+                        <span class="text-xs font-mono text-white underline tracking-widest uppercase">Ver E-Commerce ↗</span>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- ========================================== -->
+        <!-- PÁGINA 2: REAL ESTATE (#realestate) -->
+        <!-- ========================================== -->
+        <div id="page-realestate" class="page-view hidden space-y-20">
+            
+            <section class="px-6 max-w-7xl mx-auto">
+                <div class="mb-12">
+                    <span class="text-xs font-mono text-neutral-500 uppercase tracking-widest block mb-2">Página 02 / Especialización</span>
+                    <h1 class="font-display text-3xl sm:text-5xl font-bold uppercase text-white mb-4">Real Estate & Arquitectura</h1>
+                    <p class="text-xs font-mono text-neutral-400 max-w-2xl leading-relaxed">
+                        Proyectos audiovisuales y renders cinematográficos diseñados para destacar acabados de lujo, espacios residenciales y ventas de preventa inmobiliaria.
+                    </p>
+                </div>
+
+                <!-- Grilla de Proyectos Reales -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+                    <!-- Proyecto 1: Cevallos -->
+                    <div class="glass-panel p-4 rounded border border-white/10 glass-panel-hover transition-all flex flex-col justify-between">
+                        <div class="relative aspect-video bg-black overflow-hidden mb-4 border border-white/10 rounded">
+                            <video controls autoplay muted loop playsinline webkit-playsinline preload="auto" class="w-full h-full object-cover">
+                                <source src="https://github.com/davidrafael777/portafolio-web/releases/download/v1.0/secundario.1.mp4" type="video/mp4">
+                                Tu navegador no soporta la reproducción de este video.
+                            </video>
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-[9px] font-mono text-neutral-400 uppercase tracking-widest block">ECUADOR • CEVALLOS</span>
+                            </div>
+                            <h3 class="font-display text-sm font-bold text-white uppercase mb-2">Casa Familiar en Cevallos</h3>
+                            <p class="text-[11px] font-mono text-neutral-400 mb-4 leading-relaxed">Producción pensada para destacar amplitud, ambiente familiar y estilo de vida residencial.</p>
+                        </div>
+                    </div>
+
+                    <!-- Proyecto 2: Rediseño Mini Apartamento -->
+                    <div class="glass-panel p-4 rounded border border-white/10 glass-panel-hover transition-all flex flex-col justify-between">
+                        <div class="relative aspect-video bg-black overflow-hidden mb-4 border border-white/10 rounded">
+                            <video controls autoplay muted loop playsinline webkit-playsinline preload="auto" class="w-full h-full object-cover">
+                                <source src="https://github.com/davidrafael777/portafolio-web/releases/download/v1.0/secundario.2.mp4" type="video/mp4">
+                                Tu navegador no soporta la reproducción de este video.
+                            </video>
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-[9px] font-mono text-neutral-400 uppercase tracking-widest block">ARQUITECTURA INTERIOR</span>
+                            </div>
+                            <h3 class="font-display text-sm font-bold text-white uppercase mb-2">Rediseño de Mini Apartamento</h3>
+                            <p class="text-[11px] font-mono text-neutral-400 mb-4 leading-relaxed">Optimizando espacios reducidos con enfoques dinámicos e iluminación de interiores.</p>
+                        </div>
+                    </div>
+
+                    <!-- Proyecto 3: Render Casa Quito -->
+                    <div class="glass-panel p-4 rounded border border-white/10 glass-panel-hover transition-all flex flex-col justify-between">
+                        <div class="relative aspect-video bg-black overflow-hidden mb-4 border border-white/10 rounded">
+                            <video controls autoplay muted loop playsinline webkit-playsinline preload="auto" class="w-full h-full object-cover">
+                                <source src="https://github.com/davidrafael777/portafolio-web/releases/download/v1.0/secundario.3.mp4" type="video/mp4">
+                                Tu navegador no soporta la reproducción de este video.
+                            </video>
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-[9px] font-mono text-neutral-400 uppercase tracking-widest block">ECUADOR • QUITO</span>
+                            </div>
+                            <h3 class="font-display text-sm font-bold text-white uppercase mb-2">Render Casa en Quito</h3>
+                            <p class="text-[11px] font-mono text-neutral-400 mb-4 leading-relaxed">Recorrido dinámico en movimiento con animación adaptada a requerimientos del cliente.</p>
+                        </div>
+                    </div>
+
+                    <!-- Proyecto 4: Clínica Odontológica -->
+                    <div class="glass-panel p-4 rounded border border-white/10 glass-panel-hover transition-all flex flex-col justify-between">
+                        <div class="relative aspect-video bg-black overflow-hidden mb-4 border border-white/10 rounded">
+                            <video controls autoplay muted loop playsinline webkit-playsinline preload="auto" class="w-full h-full object-cover">
+                                <source src="https://github.com/davidrafael777/portafolio-web/releases/download/v1.0/secundario.4.mp4" type="video/mp4">
+                                Tu navegador no soporta la reproducción de este video.
+                            </video>
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-[9px] font-mono text-neutral-400 uppercase tracking-widest block">PROYECCIÓN COMERCIAL</span>
+                            </div>
+                            <h3 class="font-display text-sm font-bold text-white uppercase mb-2">Clínica Odontológica</h3>
+                            <p class="text-[11px] font-mono text-neutral-400 mb-4 leading-relaxed">Renders de proyección arquitectónica y distribución espacial para centro médico especialización.</p>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- Tarifas y Paquetes Real Estate -->
+            <section class="px-6 max-w-7xl mx-auto pt-10 border-t border-white/10">
+                <div class="mb-10">
+                    <span class="text-xs font-mono text-neutral-500 uppercase tracking-widest block mb-2">Tarifas Sectorizadas</span>
+                    <h2 class="font-display text-2xl font-bold uppercase text-white">Paquetes Real Estate & Arquitectura</h2>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <!-- Pack 01 -->
+                    <div class="glass-panel p-8 rounded-xl border border-white/10 flex flex-col justify-between">
+                        <div>
+                            <span class="text-[10px] font-mono text-neutral-400 uppercase tracking-widest block mb-2">2x Reels Cinematográficos</span>
+                            <h3 class="font-display text-xl font-bold text-white uppercase mb-4">Spot Arquitectónico</h3>
+                            <p class="text-xs font-mono text-neutral-400 mb-6 leading-relaxed">Recorrido dinámico interior + enfoque en fachada e iluminación.</p>
+                            <ul class="space-y-2 mb-8 border-t border-white/10 pt-4">
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> 2x Reels (9:16)</li>
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> Retoque IA de cielos y acabados</li>
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> 3x Fotografías Stills HD</li>
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> Voz en Off con IA (Voiceover)</li>
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> CTA / Placa final con logo y WhatsApp</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <div class="text-lg font-display font-bold text-white mb-4">$350 USD</div>
+                            <a href="#contacto" onclick="preselectQuote('Real Estate', 'Pack 01')" class="block w-full py-3 bg-white/10 hover:bg-white hover:text-black border border-white/20 text-center font-mono text-xs uppercase tracking-widest font-semibold transition-all rounded">
+                                Cotizar Este Pack
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Pack 02 -->
+                    <div class="glass-panel p-8 rounded-xl border border-white/20 relative flex flex-col justify-between">
+                        <span class="absolute -top-3 right-6 px-3 py-1 bg-white text-black text-[9px] font-mono font-bold uppercase tracking-wider rounded">Más Recomendado</span>
+                        <div>
+                            <span class="text-[10px] font-mono text-neutral-400 uppercase tracking-widest block mb-2">4x Reels de Nicho</span>
+                            <h3 class="font-display text-xl font-bold text-white uppercase mb-4">Preventa & Lujo</h3>
+                            <p class="text-xs font-mono text-neutral-400 mb-6 leading-relaxed">Master recorrido + estilo de vida + detalles + hook publicitario.</p>
+                            <ul class="space-y-2 mb-8 border-t border-white/10 pt-4">
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> 4x Reels (9:16)</li>
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> Staging virtual con IA</li>
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> 6x Fotografías Stills HD</li>
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> Variantes de Hook A/B para Ads</li>
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> Ficha Técnica Digital (Brochure PDF)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <div class="text-lg font-display font-bold text-white mb-4">$700 USD</div>
+                            <a href="#contacto" onclick="preselectQuote('Real Estate', 'Pack 02')" class="block w-full py-3 bg-white text-black hover:bg-neutral-200 text-center font-mono text-xs uppercase tracking-widest font-bold transition-all rounded">
+                                Cotizar Este Pack
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Pack 03 -->
+                    <div class="glass-panel p-8 rounded-xl border border-white/10 flex flex-col justify-between">
+                        <div>
+                            <span class="text-[10px] font-mono text-neutral-400 uppercase tracking-widest block mb-2">8x Reels de Alto Impacto</span>
+                            <h3 class="font-display text-xl font-bold text-white uppercase mb-4">Master Developer</h3>
+                            <p class="text-xs font-mono text-neutral-400 mb-6 leading-relaxed">Cobertura total de áreas comunes, interiores, vistas aéreas y pauta.</p>
+                            <ul class="space-y-2 mb-8 border-t border-white/10 pt-4">
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> 8x Reels (9:16)</li>
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> Paquete Transmedia (H/V)</li>
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> 12x Fotografías Stills HD</li>
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> Pruebas de Anuncio A/B</li>
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> Página web del proyecto + Embudo WhatsApp/CRM</li>
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> Tours Interactivos 360 en la web</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <div class="text-lg font-display font-bold text-white mb-4">$1,600 - $2,200 USD</div>
+                            <a href="#contacto" onclick="preselectQuote('Real Estate', 'Pack 03')" class="block w-full py-3 bg-white/10 hover:bg-white hover:text-black border border-white/20 text-center font-mono text-xs uppercase tracking-widest font-semibold transition-all rounded">
+                                Cotizar Este Pack
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- ========================================== -->
+        <!-- PÁGINA 3: E-COMMERCE & VENUES (#producto) -->
+        <!-- ========================================== -->
+        <div id="page-producto" class="page-view hidden space-y-20">
+            
+            <section class="px-6 max-w-7xl mx-auto">
+                <div class="mb-12">
+                    <span class="text-xs font-mono text-neutral-500 uppercase tracking-widest block mb-2">Página 03 / Laboratorio CGI</span>
+                    <h1 class="font-display text-3xl sm:text-5xl font-bold uppercase text-white mb-4">E-Commerce & Venues</h1>
+                    <p class="text-xs font-mono text-neutral-400 max-w-2xl leading-relaxed">
+                        Visuales hiperedificados, simulaciones CGI 3D, comerciales de producto y diseño de atmósfera para locales de experiencia y e-commerce.
+                    </p>
+                </div>
+
+                <!-- Bloque informativo de Laboratorio de Producto -->
+                <div class="glass-panel p-8 rounded-xl border border-white/20 mb-16">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center md:text-left">
+                        <div class="p-4">
+                            <span class="text-xs font-mono text-neutral-400 block mb-2">01 / CGI PRODUCTO</span>
+                            <h3 class="font-display text-lg font-bold text-white uppercase mb-2">Estudio Digital 3D</h3>
+                            <p class="text-[11px] font-mono text-neutral-400 leading-relaxed">
+                                Generación de empaques e iluminación física de estudio sin límites de locación.
+                            </p>
+                        </div>
+                        <div class="p-4 border-t md:border-t-0 md:border-l border-white/10">
+                            <span class="text-xs font-mono text-neutral-400 block mb-2">02 / VENUES & ESPACIOS</span>
+                            <h3 class="font-display text-lg font-bold text-white uppercase mb-2">Diseño de Atmósfera</h3>
+                            <p class="text-[11px] font-mono text-neutral-400 leading-relaxed">
+                                Cobertura estética con audio inmersivo para hoteles boutique y gastronomía.
+                            </p>
+                        </div>
+                        <div class="p-4 border-t md:border-t-0 md:border-l border-white/10">
+                            <span class="text-xs font-mono text-neutral-400 block mb-2">03 / META ADS</span>
+                            <h3 class="font-display text-lg font-bold text-white uppercase mb-2">Pruebas A/B de Hooks</h3>
+                            <p class="text-[11px] font-mono text-neutral-400 leading-relaxed">
+                                Variaciones de los primeros 3 segundos optimizadas para rendimiento de anuncios.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarifas Producto & E-Commerce -->
+                <div class="mb-12">
+                    <span class="text-xs font-mono text-neutral-500 uppercase tracking-widest block mb-2">Tarifario E-Commerce</span>
+                    <h2 class="font-display text-2xl font-bold uppercase text-white">Paquetes Producto & Marca</h2>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <!-- Pack Producto 1 -->
+                    <div class="glass-panel p-8 rounded-xl border border-white/10 flex flex-col justify-between">
+                        <div>
+                            <span class="text-[10px] font-mono text-neutral-400 uppercase tracking-widest block mb-2">2x Reels Comercial / CGI</span>
+                            <h3 class="font-display text-xl font-bold text-white uppercase mb-4">E-Commerce Starter</h3>
+                            <p class="text-xs font-mono text-neutral-400 mb-6 leading-relaxed">Presentación 3D del producto + demostración de uso.</p>
+                            <ul class="space-y-2 mb-8 border-t border-white/10 pt-4">
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> 2x Reels (9:16)</li>
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> Estudio digital CGI</li>
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> 8x Fotografías de Producto HD</li>
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> Renders PNG sin fondo transparente</li>
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> Formatos e-Commerce (Amazon, Shopify, ML)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <div class="text-lg font-display font-bold text-white mb-4">$300 - $450 USD</div>
+                            <a href="#contacto" onclick="preselectQuote('Producto', 'Pack 01')" class="block w-full py-3 bg-white/10 hover:bg-white hover:text-black border border-white/20 text-center font-mono text-xs uppercase tracking-widest font-semibold transition-all rounded">
+                                Cotizar Producto ↗
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Pack Producto 2 -->
+                    <div class="glass-panel p-8 rounded-xl border border-white/20 relative flex flex-col justify-between">
+                        <span class="absolute -top-3 right-6 px-3 py-1 bg-white text-black text-[9px] font-mono font-bold uppercase tracking-wider rounded">Recomendado Marcas</span>
+                        <div>
+                            <span class="text-[10px] font-mono text-neutral-400 uppercase tracking-widest block mb-2">4x Reels Publicitarios</span>
+                            <h3 class="font-display text-xl font-bold text-white uppercase mb-4">Commercial Brand</h3>
+                            <p class="text-xs font-mono text-neutral-400 mb-6 leading-relaxed">Comercial Hero + Unboxing + Beneficios + Conversión Rápida.</p>
+                            <ul class="space-y-2 mb-8 border-t border-white/10 pt-4">
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> 4x Reels (9:16)</li>
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> 15x Fotografías de Producto HD</li>
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> 4x Micro-Comerciales / Stories Dinámicos</li>
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> Locución IA + Diseño SFX inmersivo</li>
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> Kit de Copys para Anuncios (Direct Response)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <div class="text-lg font-display font-bold text-white mb-4">$700 - $850 USD</div>
+                            <a href="#contacto" onclick="preselectQuote('Producto', 'Pack 02')" class="block w-full py-3 bg-white text-black hover:bg-neutral-200 text-center font-mono text-xs uppercase tracking-widest font-bold transition-all rounded">
+                                Cotizar Producto ↗
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Pack Producto 3 -->
+                    <div class="glass-panel p-8 rounded-xl border border-white/10 flex flex-col justify-between">
+                        <div>
+                            <span class="text-[10px] font-mono text-neutral-400 uppercase tracking-widest block mb-2">8x Reels de Campaña</span>
+                            <h3 class="font-display text-xl font-bold text-white uppercase mb-4">Global Product Launch</h3>
+                            <p class="text-xs font-mono text-neutral-400 mb-6 leading-relaxed">Lanzamiento completo, estilo de vida, macro-shots 3D y pauta digital.</p>
+                            <ul class="space-y-2 mb-8 border-t border-white/10 pt-4">
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> 8x Reels (9:16)</li>
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> Entorno CGI Exclusivo</li>
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> 20x Fotografías e-Commerce HD</li>
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> Página web oficial del producto</li>
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> Ad Asset Kit (Clips + Logo Stinger 3D)</li>
+                                <li class="text-[11px] font-mono text-neutral-300 flex items-center gap-2"><span>•</span> Setup de Pauta Digital (Meta & TikTok Ads)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <div class="text-lg font-display font-bold text-white mb-4">$1,500 - $2,500 USD</div>
+                            <a href="#contacto" onclick="preselectQuote('Producto', 'Pack 03')" class="block w-full py-3 bg-white/10 hover:bg-white hover:text-black border border-white/20 text-center font-mono text-xs uppercase tracking-widest font-semibold transition-all rounded">
+                                Cotizar Producto ↗
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- ========================================== -->
+        <!-- PÁGINA 4: CONTACTO & COTIZADOR (#contacto) -->
+        <!-- ========================================== -->
+        <div id="page-contacto" class="page-view hidden space-y-12">
+            
+            <section class="px-6 max-w-4xl mx-auto">
+                <div class="glass-panel p-8 md:p-12 rounded-xl border border-white/20">
+                    <div class="mb-10 text-center">
+                        <span class="text-xs font-mono text-neutral-500 uppercase tracking-widest block mb-2">Página 04 / Cotizador Interactivo</span>
+                        <h1 class="font-display text-2xl sm:text-4xl font-bold uppercase text-white mb-3">Diseña tu Propuesta de Proyecto</h1>
+                        <p class="text-xs font-mono text-neutral-400">Selecciona los parámetros de tu proyecto y recibe la estimación en tiempo real por WhatsApp.</p>
+                    </div>
+
+                    <form id="quoteForm" onsubmit="handleQuoteSubmit(event)" class="space-y-8">
+                        <!-- Paso 1: Sector -->
+                        <div>
+                            <label class="block text-xs font-mono uppercase text-neutral-400 mb-3">1. Selecciona tu Sector:</label>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <label class="border border-white/20 p-4 rounded cursor-pointer hover:border-white transition-all block text-center">
+                                    <input type="radio" name="formSector" value="Real Estate" checked onchange="updateCalculator()" class="hidden peer">
+                                    <span class="text-xs font-mono uppercase text-neutral-300 peer-checked:text-white font-bold">Real Estate</span>
+                                </label>
+                                <label class="border border-white/20 p-4 rounded cursor-pointer hover:border-white transition-all block text-center">
+                                    <input type="radio" name="formSector" value="Producto" onchange="updateCalculator()" class="hidden peer">
+                                    <span class="text-xs font-mono uppercase text-neutral-300 peer-checked:text-white font-bold">Producto</span>
+                                </label>
+                                <label class="border border-white/20 p-4 rounded cursor-pointer hover:border-white transition-all block text-center">
+                                    <input type="radio" name="formSector" value="Venues" onchange="updateCalculator()" class="hidden peer">
+                                    <span class="text-xs font-mono uppercase text-neutral-300 peer-checked:text-white font-bold">Venues / Espacios</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Paso 2: Escala de Contenido -->
+                        <div>
+                            <label class="block text-xs font-mono uppercase text-neutral-400 mb-3">2. Escala de Contenido:</label>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <label class="border border-white/20 p-4 rounded cursor-pointer hover:border-white transition-all block">
+                                    <input type="radio" name="formPack" value="Pack 01" checked onchange="updateCalculator()" class="hidden peer">
+                                    <span class="text-xs font-mono uppercase block font-bold mb-1 text-white">Pack 01 (2 Reels)</span>
+                                    <span class="text-[10px] text-neutral-400 font-mono block">Esencial / Prueba</span>
+                                </label>
+                                <label class="border border-white/20 p-4 rounded cursor-pointer hover:border-white transition-all block">
+                                    <input type="radio" name="formPack" value="Pack 02" onchange="updateCalculator()" class="hidden peer">
+                                    <span class="text-xs font-mono uppercase block font-bold mb-1 text-white">Pack 02 (4 Reels)</span>
+                                    <span class="text-[10px] text-neutral-400 font-mono block">Recomendado / Campaña</span>
+                                </label>
+                                <label class="border border-white/20 p-4 rounded cursor-pointer hover:border-white transition-all block">
+                                    <input type="radio" name="formPack" value="Pack 03" onchange="updateCalculator()" class="hidden peer">
+                                    <span class="text-xs font-mono uppercase block font-bold mb-1 text-white">Pack 03 (8 Reels)</span>
+                                    <span class="text-[10px] text-neutral-400 font-mono block">Master Transmedia</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Paso 3: Opcionales -->
+                        <div>
+                            <label class="block text-xs font-mono uppercase text-neutral-400 mb-3">3. Servicios Adicionales (Opcional):</label>
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-3 border border-white/10 p-3 rounded cursor-pointer hover:border-white/30">
+                                    <input type="checkbox" id="addHorizontal" onchange="updateCalculator()" class="rounded bg-black border-white/30">
+                                    <span class="text-xs font-mono text-neutral-300">Adaptación Horizontal 16:9 para Showrooms / Pantallas (+$120)</span>
+                                </label>
+                                <label class="flex items-center gap-3 border border-white/10 p-3 rounded cursor-pointer hover:border-white/30">
+                                    <input type="checkbox" id="addHooks" onchange="updateCalculator()" class="rounded bg-black border-white/30">
+                                    <span class="text-xs font-mono text-neutral-300">Variaciones A/B de Ganchos (Hooks) para Meta Ads (+$90)</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Paso 4: Datos de Contacto -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-white/10">
+                            <div>
+                                <label class="block text-[10px] font-mono uppercase text-neutral-400 mb-1">Nombre / Empresa</label>
+                                <input type="text" id="clientName" required placeholder="Ej: Inmobiliaria Quito" class="w-full bg-black border border-white/20 rounded p-3 text-xs text-white focus:border-white outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-mono uppercase text-neutral-400 mb-1">WhatsApp / Contacto</label>
+                                <input type="tel" id="clientPhone" required placeholder="Ej: +593 99 123 4567" class="w-full bg-black border border-white/20 rounded p-3 text-xs text-white focus:border-white outline-none">
+                            </div>
+                        </div>
+
+                        <!-- Estimación Final y Submit -->
+                        <div class="flex flex-col sm:flex-row justify-between items-center gap-6 pt-6 border-t border-white/10">
+                            <div>
+                                <span class="text-[10px] font-mono uppercase text-neutral-500 block">Inversión Estimada:</span>
+                                <span id="estimatedTotal" class="font-display text-2xl font-bold text-white">$350 USD</span>
+                            </div>
+
+                            <button type="submit" class="w-full sm:w-auto px-8 py-4 bg-white text-black font-mono text-xs uppercase tracking-widest font-bold rounded hover:bg-neutral-200 transition-all">
+                                Enviar Propuesta por WhatsApp ↗
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+        </div>
+
+    </main>
+
+    <footer class="py-12 border-t border-white/10 text-center text-xs font-mono text-neutral-500 relative z-10 mt-16">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <span>QUANTUM MEDIA LAB © 2026</span>
+            <span>VISUALES DE ALTO IMPACTO • ECUADOR</span>
+        </div>
+    </footer>
+
+    <!-- JavaScript Principal & Router SPA -->
+    <script>
+        // Manejador de Navegación por Páginas (SPA Hash Router)
+        const pages = ['inicio', 'realestate', 'producto', 'contacto'];
+
+        function navigateTo(pageId) {
+            if (!pages.includes(pageId)) pageId = 'inicio';
+
+            // Ocultar todas las páginas
+            pages.forEach(p => {
+                const pageEl = document.getElementById(`page-${p}`);
+                const navEl = document.getElementById(`nav-${p}`);
+                const mnavEl = document.getElementById(`mnav-${p}`);
+
+                if (pageEl) pageEl.classList.add('hidden');
+                if (navEl) navEl.classList.remove('active', 'text-white');
+                if (mnavEl) mnavEl.classList.remove('text-white', 'font-bold');
+            });
+
+            // Mostrar página activa
+            const activePage = document.getElementById(`page-${pageId}`);
+            const activeNav = document.getElementById(`nav-${pageId}`);
+            const activeMobileNav = document.getElementById(`mnav-${pageId}`);
+
+            if (activePage) activePage.classList.remove('hidden');
+            if (activeNav) {
+                activeNav.classList.add('active', 'text-white');
+            }
+            if (activeMobileNav) {
+                activeMobileNav.classList.add('text-white', 'font-bold');
+            }
+
+            // Actualizar URL hash sin recargar
+            window.location.hash = pageId;
+
+            // Scroll suave hacia arriba
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // Actualizar título de la pestaña para SEO
+            const titles = {
+                'inicio': 'Quantum Media Lab | Visuales Cinematográficos & CGI',
+                'realestate': 'Real Estate & Arquitectura | Quantum Media Lab',
+                'producto': 'E-Commerce & Venues | Quantum Media Lab',
+                'contacto': 'Cotizar Proyecto | Quantum Media Lab'
+            };
+            document.title = titles[pageId] || titles['inicio'];
+        }
+
+        // Detectar cambios en la URL (hashchange)
+        window.addEventListener('hashchange', () => {
+            const hash = window.location.hash.replace('#', '');
+            if (hash) navigateTo(hash);
+        });
+
+        // Evento Inicial de Carga
+        window.addEventListener('load', function() {
+            initThreeJS();
+            initBeforeAfterSlider();
+            
+            // Navegar según el hash actual o ir a 'inicio'
+            const initialHash = window.location.hash.replace('#', '');
+            navigateTo(initialHash || 'inicio');
+            
+            updateCalculator();
+        });
+
+        // Configuración de Three.js para partículas de fondo
+        function initThreeJS() {
+            const canvas = document.getElementById('bgCanvas');
+            if (!canvas || typeof THREE === 'undefined') return;
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            const geometry = new THREE.BufferGeometry();
+            const count = 1200;
+            const positions = new Float32Array(count * 3);
+
+            for(let i = 0; i < count * 3; i++) {
+                positions[i] = (Math.random() - 0.5) * 10;
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+            const material = new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 0.015,
+                transparent: true,
+                opacity: 0.4
+            });
+
+            const points = new THREE.Points(geometry, material);
+            scene.add(points);
+
+            camera.position.z = 3;
+
+            function animate() {
+                requestAnimationFrame(animate);
+                points.rotation.y += 0.0005;
+                points.rotation.x += 0.0002;
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        // Slider Antes / Después Interactivo
+        function initBeforeAfterSlider() {
+            const container = document.getElementById('baContainer');
+            const overlay = document.getElementById('baOverlay');
+            const beforeImg = document.getElementById('beforeImg');
+            const handle = document.getElementById('baHandle');
+
+            if (!container || !overlay || !beforeImg || !handle) return;
+
+            let isDragging = false;
+
+            function setPosition(x) {
+                const rect = container.getBoundingClientRect();
+                let posX = x - rect.left;
+                if (posX < 0) posX = 0;
+                if (posX > rect.width) posX = rect.width;
+
+                const percentage = (posX / rect.width) * 100;
+                overlay.style.width = `${percentage}%`;
+                handle.style.left = `${percentage}%`;
+                beforeImg.style.width = `${rect.width}px`;
+            }
+
+            container.addEventListener('mousedown', (e) => { isDragging = true; setPosition(e.clientX); });
+            window.addEventListener('mousemove', (e) => { if (isDragging) setPosition(e.clientX); });
+            window.addEventListener('mouseup', () => { isDragging = false; });
+
+            container.addEventListener('touchstart', (e) => { isDragging = true; setPosition(e.touches[0].clientX); });
+            window.addEventListener('touchmove', (e) => { if (isDragging) setPosition(e.touches[0].clientX); });
+            window.addEventListener('touchend', () => { isDragging = false; });
+        }
+
+        // Cambiar Muestras en Slider Antes/Después
+        function setBASample(sampleId) {
+            const btn1 = document.getElementById('baBtn1');
+            const btn2 = document.getElementById('baBtn2');
+            const beforeImg = document.getElementById('beforeImg');
+            const afterVideo = document.getElementById('afterVideo');
+
+            if (sampleId === 1) {
+                btn1.className = "px-4 py-2 border border-white text-xs font-mono uppercase bg-white text-black transition-all";
+                btn2.className = "px-4 py-2 border border-white/30 text-xs font-mono uppercase text-neutral-400 hover:text-white transition-all";
+                beforeImg.src = "https://lh3.googleusercontent.com/sitesv/AG8ngQW1LkHTu_43_zZTtweXm70mz23R0hYrQ5Z5vHoldU42mwHB4uuFJLUUjpbqrsPbdRrfC3H0yEBd3_Cv04hyMxXzJIq9AMQcMq6Xd3CTVNzj2Ylhp-T4lDjIl6RpafV9-vaPhaNgODHm_UOyr_AN_dSswtMCDl-dfzzl03UZT_G3hhnhlbwqdcKPVLJAVHd1IPUvZMcq-qSeKi3Wet1M8CZxytIVbJAr_yV9qsK6tJs=w1280";
+                afterVideo.src = "https://drive.google.com/file/d/10i1UkZMrhuW_Tdl9le_CNGpae5LsLYp4/preview";
+            } else {
+                btn2.className = "px-4 py-2 border border-white text-xs font-mono uppercase bg-white text-black transition-all";
+                btn1.className = "px-4 py-2 border border-white/30 text-xs font-mono uppercase text-neutral-400 hover:text-white transition-all";
+                beforeImg.src = "https://lh3.googleusercontent.com/sitesv/AG8ngQWyvzYLvxgyMWVv-dYgFniT4Sq7jeanT61NVS652gJl7QML06oTWrC-_oOnrLT0o2orc7vU_a85Iq_T_wAoRuU069H-H5Oqatrd-jPpZSoUyRvmC__gZnDmsVPqo13F-XLDjpdAf9h2ojdGvj2pNUyCjJ5eh7DHqwAerzCJJ_NXcEIcoS0JTgxWdWJrqODg3etLsFIiCvVz2PbI9Rrk6YYuBVeqdPVo1pY-8L04MtI=w1280";
+                afterVideo.src = "https://drive.google.com/file/d/1ZP8xlMd1aTrzf3r26y5SICqub7s9F0HI/preview";
+            }
+        }
+
+        // Preselección desde enlaces de páginas
+        function preselectQuote(sectorVal, packVal) {
+            navigateTo('contacto');
+            const sectorRadios = document.querySelectorAll('input[name="formSector"]');
+            sectorRadios.forEach(r => {
+                if (r.value === sectorVal) r.checked = true;
+            });
+
+            const packRadios = document.querySelectorAll('input[name="formPack"]');
+            packRadios.forEach(p => {
+                if (p.value === packVal) p.checked = true;
+            });
+
+            updateCalculator();
+        }
+
+        // Calculadora de Cotizador
+        function updateCalculator() {
+            const sector = document.querySelector('input[name="formSector"]:checked')?.value || 'Real Estate';
+            const pack = document.querySelector('input[name="formPack"]:checked')?.value || 'Pack 01';
+            const addHoriz = document.getElementById('addHorizontal')?.checked || false;
+            const addHooks = document.getElementById('addHooks')?.checked || false;
+
+            let baseRange = "$350 USD";
+
+            if (sector === 'Real Estate') {
+                if (pack === 'Pack 01') baseRange = "$350 USD";
+                if (pack === 'Pack 02') baseRange = "$700 USD";
+                if (pack === 'Pack 03') baseRange = "$1,600 - $2,200 USD";
+            } else if (sector === 'Producto') {
+                if (pack === 'Pack 01') baseRange = "$300 - $450 USD";
+                if (pack === 'Pack 02') baseRange = "$700 - $850 USD";
+                if (pack === 'Pack 03') baseRange = "$1,500 - $2,500 USD";
+            } else { // Venues
+                if (pack === 'Pack 01') baseRange = "$300 - $380 USD";
+                if (pack === 'Pack 02') baseRange = "$680 - $800 USD";
+                if (pack === 'Pack 03') baseRange = "$1,300 - $1,600 USD";
+            }
+
+            let extrasText = "";
+            if (addHoriz) extrasText += " (+ Adaptación Horizontal)";
+            if (addHooks) extrasText += " (+ Ganchos A/B)";
+
+            const totalEl = document.getElementById('estimatedTotal');
+            if (totalEl) totalEl.textContent = baseRange + extrasText;
+        }
+
+        // Envío de Propuesta por WhatsApp
+        function handleQuoteSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('clientName').value;
+            const phone = document.getElementById('clientPhone').value;
+            const sector = document.querySelector('input[name="formSector"]:checked').value;
+            const pack = document.querySelector('input[name="formPack"]:checked').value;
+            const total = document.getElementById('estimatedTotal').textContent;
+
+            const msg = `Hola Quantum Media Lab, me interesa cotizar un proyecto:%0A` +
+                        `• *Cliente:* ${encodeURIComponent(name)}%0A` +
+                        `• *Teléfono:* ${encodeURIComponent(phone)}%0A` +
+                        `• *Sector:* ${encodeURIComponent(sector)}%0A` +
+                        `• *Escala:* ${encodeURIComponent(pack)}%0A` +
+                        `• *Estimación:* ${encodeURIComponent(total)}`;
+
+            window.open(`https://wa.me/593991234567?text=${msg}`, '_blank');
+        }
+    </script>
+</body>
+</html>
